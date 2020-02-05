@@ -1,5 +1,5 @@
 {
-    "name": "dptsi/php-openid-connect-client",
+    "name": "myits/php-openid-connect-client",
     "description": "Library for connect to myITS SSO",
     "type": "library",
     "require": {
