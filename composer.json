@@ -1,5 +1,5 @@
 {
-    "name": "its/openid-connect-client",
+    "name": "dptsi/openid-connect-client",
     "description": "Bare-bones OpenID Connect client",
     "type": "library",
     "require": {
