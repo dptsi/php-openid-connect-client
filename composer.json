@@ -1,6 +1,6 @@
 {
     "name": "dptsi/php-openid-connect-client",
-    "description": "Bare-bones OpenID Connect client",
+    "description": "Library for connect to myITS SSO",
     "type": "library",
     "require": {
         "php": "5.4",
