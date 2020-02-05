@@ -1,5 +1,5 @@
 {
-    "name": "dptsi/openid-connect-client",
+    "name": "dptsi/php-openid-connect-client",
     "description": "Bare-bones OpenID Connect client",
     "type": "library",
     "require": {
