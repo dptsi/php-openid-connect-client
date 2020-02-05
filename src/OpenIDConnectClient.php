@@ -2,10 +2,10 @@
 
 /**
  *
- * Copyright MITRE 2019
+ * Copyright DPTSI 2020
  *
  * OpenIDConnectClient for PHP5
- * Author: Michael Jett <mjett@mitre.org>
+ * Author: DPTSI ITS <mobile@its.ac.id>
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may
  * not use this file except in compliance with the License. You may obtain
@@ -21,11 +21,11 @@
  *
  */
 
-namespace Jumbojett;
+namespace Its;
 
 /**
  *
- * JWT signature verification support by Jonathan Reed <jdreed@mit.edu>
+ * This package is base on jumbojett/OpenID-Connect-PHP Michael Jett <mjett@mitre.org>
  * Licensed under the same license as the rest of this file.
  *
  * phpseclib is required to validate the signatures of some tokens.
