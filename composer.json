@@ -9,8 +9,9 @@
         "ext-curl": "*"
     },
     "license": "Apache-2.0",
+    "minimum-stability": "stable",
     "autoload": {
-        "classmap": [ "src/" ]
+        "psr-4": { "Its": "src/" }  
     },
     "authors": [
         {
