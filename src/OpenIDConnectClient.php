@@ -25,11 +25,9 @@ namespace Its;
 
 /**
  *
- * This package is base on jumbojett/OpenID-Connect-PHP Michael Jett <mjett@mitre.org>
+ * This package is base on jumbojett/OpenID-Connect-PHP by Michael Jett <mjett@mitre.org>
  * Licensed under the same license as the rest of this file.
  *
- * phpseclib is required to validate the signatures of some tokens.
- * It can be downloaded from: http://phpseclib.sourceforge.net/
  */
 
 if (!class_exists('\phpseclib\Crypt\RSA') && !class_exists('Crypt_RSA')) {
