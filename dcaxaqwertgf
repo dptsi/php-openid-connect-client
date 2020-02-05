@@ -1,0 +1,17 @@
+[33mcommit afa377ea2988762831b1d3d5d0ecae7949895cbd[m[33m ([m[1;36mHEAD -> [m[1;32mmaster[m[33m, [m[1;33mtag: v1.0.0[m[33m, [m[1;31morigin/master[m[33m, [m[1;31morigin/HEAD[m[33m)[m
+Author: Labba Awwabi <labbaawwabi@gmail.com>
+Date:   Wed Feb 5 11:33:00 2020 +0700
+
+    composer
+
+[1mdiff --git a/composer.json b/composer.json[m
+[1mindex 3e95da4..a18561c 100644[m
+[1m--- a/composer.json[m
+[1m+++ b/composer.json[m
+[36m@@ -1,5 +1,5 @@[m
+ {[m
+[31m-    "name": "dptsi/php-openid-connect-client",[m
+[32m+[m[32m    "name": "myits/php-openid-connect-client",[m
+     "description": "Library for connect to myITS SSO",[m
+     "type": "library",[m
+     "require": {[m
