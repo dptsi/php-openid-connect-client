@@ -21,7 +21,7 @@
  *
  */
 
-namespace Its;
+namespace Its\Sso;
 
 /**
  *
