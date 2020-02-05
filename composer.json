@@ -1,0 +1,21 @@
+{
+    "name": "its/openid-connect-client",
+    "description": "Bare-bones OpenID Connect client",
+    "type": "library",
+    "require": {
+        "php": "5.4",
+        "phpseclib/phpseclib": "~2.0",
+        "ext-json": "^1.7",
+        "ext-curl": "*"
+    },
+    "license": "Apache-2.0",
+    "autoload": {
+        "classmap": [ "src/" ]
+    },
+    "authors": [
+        {
+            "name": "DPTSI ITS",
+            "email": "mobile@its.ac.id"
+        }
+    ]
+}
