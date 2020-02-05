@@ -1,6 +1,6 @@
 {
     "name": "myits/php-openid-connect-client",
-    "description": "Library for connect to myITS SSO",
+    "description": "Package for connect to myITS SSO",
     "type": "library",
     "require": {
         "php": "^5.4",
