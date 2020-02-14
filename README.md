@@ -42,14 +42,14 @@ try {
 		    '00b53ea23741cf2eeafb4f9c' // Client Secret
 		);
  
- $oidc->setRedirectURL('https://myweb.site/auth.php'); // must be the same as you registered
- $oidc->addScope('openid code phone profile'); //must be the same as you registered
+    $oidc->setRedirectURL('https://myweb.site/auth.php'); // must be the same as you registered
+    $oidc->addScope('openid code phone profile'); //must be the same as you registered
 
- $oidc->authenticate(); //call the main function of myITS SSO login
+    $oidc->authenticate(); //call the main function of myITS SSO login
 
- $_SESSION['id_token'] = $oidc->getIdToken(); // must be save for check session dan logout proccess
+    $_SESSION['id_token'] = $oidc->getIdToken(); // must be save for check session dan logout proccess
 } catch (OpenIDConnectClientException $e) {
-	echo $e->getMessage();
+    echo $e->getMessage();
 }
 ```
 
