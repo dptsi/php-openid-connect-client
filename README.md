@@ -38,7 +38,7 @@ use Its\Sso\OpenIDConnectClientException;
 try {
     $oidc = new OpenIDConnectClient(
                     'https://dev-my.its.ac.id', // authorization_endpoint
-		    'XXXXXXX-XXXXXXX-XXXXXXX-XXXXXXX, // Client ID
+		    'XXXXXXX-XXXXXXX-XXXXXXX-XXXXXXX', // Client ID
 		    '***********************' // Client Secret
 		);
  
@@ -76,7 +76,7 @@ try {
 
         $oidc = new OpenIDConnectClient(
                     'https://dev-my.its.ac.id', // authorization_endpoint
-		    'XXXXXXX-XXXXXXX-XXXXXXX-XXXXXXX, // Client ID
+		    'XXXXXXX-XXXXXXX-XXXXXXX-XXXXXXX', // Client ID
 		    '***********************' // Client Secret
 		);
 	
