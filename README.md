@@ -28,19 +28,21 @@ use Its\Sso\OpenIDConnectClient;
 use Its\Sso\OpenIDConnectClientException;
 ```
 ## Sample login ##
-```
+```php
 <?php
+require './vendor/autoload.php';
+
 use Its\Sso\OpenIDConnectClient;
 use Its\Sso\OpenIDConnectClientException;
 
 try {
- $oidc = new OpenIDConnectClient(
-  'https://my.its.ac.id', // authorization_endpoint
-  '849D9D71-D0D5-408B-A89B-A76D912687CF', // Client ID
-  '00b53ea23741cf2eeafb4f9c' // Client Secret
- );
+    $oidc = new OpenIDConnectClient(
+                    'https://my.its.ac.id', // authorization_endpoint
+		    '849D9D71-D0D5-408B-A89B-A76D912687CF', // Client ID
+		    '00b53ea23741cf2eeafb4f9c' // Client Secret
+		);
  
- $oidc->setRedirectURL('https://php-client-1.local/auth.php'); // must be the same as you registered
+ $oidc->setRedirectURL('https://myweb.site/auth.php'); // must be the same as you registered
  $oidc->addScope('openid code phone profile'); //must be the same as you registered
 
  $oidc->authenticate(); //call the main function of myITS SSO login
@@ -49,4 +51,44 @@ try {
 } catch (OpenIDConnectClientException $e) {
 	echo $e->getMessage();
 }
+```
+
+## Sample logout ##
+```php
+<?php
+require './vendor/autoload.php';
+
+use Its\OpenIDConnectClient;
+use Its\OpenIDConnectClientException;
+
+try {
+    session_start();
+    $redirect = 'https://myweb.site/index.php';
+
+    if (isset($_SESSION['id_token'])) {
+        $accessToken = $_SESSION['id_token'];
+
+        session_destroy();
+
+        $oidc = new OpenIDConnectClient(
+                    'https://my.its.ac.id', // authorization_endpoint
+		    '849D9D71-D0D5-408B-A89B-A76D912687CF', // Client ID
+		    '00b53ea23741cf2eeafb4f9c' // Client Secret
+		);
+
+        $oidc->signOut($accessToken, $redirect);
+    }
+
+    header("Location: " . $redirect);
+} catch (OpenIDConnectClientException $e) {
+    echo $e->getMessage();
+}
+```
+
+## Dev mode ##
+You must include this code if you still in development environment
+```
+// put this code above $oidc->authenticate() or $oidc->signOut($accessToken, $redirect)
+$oidc->setVerifyHost(false);
+$oidc->setVerifyPeer(false);
 ```
