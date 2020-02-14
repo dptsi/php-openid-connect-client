@@ -15,9 +15,12 @@ developed specifically to connect applications that want to connect with myITS S
 ## Install ##
  1. Install library using composer
 ```
-composer require myits/openid-connect-php
+composer require myits/openid-connect-client
 ```
- 2. Include composer autoloader
+ 2. Include composer autoloader and use class OpenIDConnectClient
 ```php
 require __DIR__ . '/vendor/autoload.php';
+
+use Its\Sso\OpenIDConnectClient;
+use Its\Sso\OpenIDConnectClientException;
 ```
