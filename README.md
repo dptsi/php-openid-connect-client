@@ -32,7 +32,6 @@ use Its\Sso\OpenIDConnectClientException;
 <?php
 use Its\Sso\OpenIDConnectClient;
 use Its\Sso\OpenIDConnectClientException;
-…
 
 try {
  $oidc = new OpenIDConnectClient(
