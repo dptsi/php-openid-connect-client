@@ -37,13 +37,17 @@ use Its\Sso\OpenIDConnectClientException;
 
 try {
     $oidc = new OpenIDConnectClient(
-                    'https://my.its.ac.id', // authorization_endpoint
-		    '849D9D71-D0D5-408B-A89B-A76D912687CF', // Client ID
-		    '00b53ea23741cf2eeafb4f9c' // Client Secret
+                    'https://dev-my.its.ac.id', // authorization_endpoint
+		    'XXXXXXX-XXXXXXX-XXXXXXX-XXXXXXX, // Client ID
+		    '***********************' // Client Secret
 		);
  
     $oidc->setRedirectURL('https://myweb.site/auth.php'); // must be the same as you registered
     $oidc->addScope('openid code phone profile'); //must be the same as you registered
+    
+    // remove this if in production mode
+    $oidc->setVerifyHost(false);
+    $oidc->setVerifyPeer(false);
 
     $oidc->authenticate(); //call the main function of myITS SSO login
 
@@ -71,10 +75,14 @@ try {
         session_destroy();
 
         $oidc = new OpenIDConnectClient(
-                    'https://my.its.ac.id', // authorization_endpoint
-		    '849D9D71-D0D5-408B-A89B-A76D912687CF', // Client ID
-		    '00b53ea23741cf2eeafb4f9c' // Client Secret
+                    'https://dev-my.its.ac.id', // authorization_endpoint
+		    'XXXXXXX-XXXXXXX-XXXXXXX-XXXXXXX, // Client ID
+		    '***********************' // Client Secret
 		);
+	
+	// remove this if in production mode
+	$oidc->setVerifyHost(false);
+	$oidc->setVerifyPeer(false);
 
         $oidc->signOut($accessToken, $redirect);
     }
@@ -83,12 +91,4 @@ try {
 } catch (OpenIDConnectClientException $e) {
     echo $e->getMessage();
 }
-```
-
-## Dev mode ##
-You must include this code if you still in development environment
-```
-// put this code above $oidc->authenticate() or $oidc->signOut($accessToken, $redirect)
-$oidc->setVerifyHost(false);
-$oidc->setVerifyPeer(false);
 ```
