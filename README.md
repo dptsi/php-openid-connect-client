@@ -92,3 +92,6 @@ try {
     echo $e->getMessage();
 }
 ```
+
+## More information ##
+More information and sample of this package you can see at [our wiki](https://github.com/dptsi/php-openid-connect-client/wiki)
