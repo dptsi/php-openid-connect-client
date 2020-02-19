@@ -18,7 +18,7 @@ Your application must be registered to the system, you can register your app by 
 ## Install ##
  1. Install library using composer
 ```
-composer require myits/openid-connect-client
+composer require myits/openid-connect-client:*
 ```
  2. Include composer autoloader and use class OpenIDConnectClient
 ```php
