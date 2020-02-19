@@ -23,6 +23,8 @@
 
 namespace Its\Sso;
 
+use GuzzleHttp\Exception\InvalidArgumentException;
+
 /**
  *
  * This package is base on jumbojett/OpenID-Connect-PHP by Michael Jett <mjett@mitre.org>
@@ -268,6 +270,27 @@ class OpenIDConnectClient
             }
 
             return $user;
+        }
+
+        return null;
+    }
+
+    /**
+     *
+     * Get the impersonated sub
+     * @throws \Exception
+     * @return mixed|null
+     */
+    public function getImpersonatedUser()
+    {
+        if (is_null($this->idToken)) {
+            throw new \Exception('$this->idToken cannot be null');
+        }
+
+        $decodedJwt = (array)$this->decodeJWT($this->idToken, 1);
+
+        if (isset($decodedJwt['sub']) && isset($decodedJwt['act'])) {
+            return $decodedJwt['sub'];
         }
 
         return null;
