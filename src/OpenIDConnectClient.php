@@ -256,9 +256,9 @@ class OpenIDConnectClient
     }
 
     /**
-     * @return array
+     * @return array|null
      */
-    public function getUserIdentifier() : array
+    public function getUserIdentifier()
     {
         if ($idToken = $this->idToken) {
             $decodedIdToken = (array) $this->decodeJWT($idToken, 1);
@@ -846,15 +846,16 @@ class OpenIDConnectClient
     /**
      * @return array
      */
-    public function getExtraQueryParams(): array
+    public function getExtraQueryParams()
     {
         return $this->extraQueryParams;
     }
 
     /**
      * @param array $extraQueryParams
+     * @return void
      */
-    public function setExtraQueryParams(array $extraQueryParams): void
+    public function setExtraQueryParams(array $extraQueryParams)
     {
         $this->extraQueryParams = $extraQueryParams;
     }
@@ -1297,7 +1298,7 @@ class OpenIDConnectClient
     /**
      * @return bool
      */
-    public function isImpersonating(): bool
+    public function isImpersonating()
     {
         return $this->impersonating;
     }
@@ -1305,15 +1306,16 @@ class OpenIDConnectClient
     /**
      * @param bool $impersonating
      */
-    public function setImpersonating(bool $impersonating): void
+    public function setImpersonating($impersonating)
     {
         $this->impersonating = $impersonating;
     }
 
     /**
      * @param string $idToken
+     * @return void
      */
-    public function setIdToken(string $idToken): void
+    public function setIdToken($idToken)
     {
         $this->idToken = $idToken;
     }
