@@ -714,8 +714,8 @@ class OpenIDConnectClient
         }
 
         // read from config, or state
-        $pkceConfig = false;
-        if ($pkceConfig) {
+        $slientSecret = $this->getClientSecret();
+        if (empty($slientSecret)) {
             $code_challenge_method = 'S256';
             $code_verifier = $this->setCodeVerifier($this->generateCodeVerifier());
             $code_challenge = $this->generateCodeChallenge($code_verifier, $code_challenge_method);
@@ -822,7 +822,9 @@ class OpenIDConnectClient
 
         // Include code verifier on token request if code challenge exist
         if (!empty($code_challenge)) {
+            $headers = [];
             $token_params['code_verifier'] = $this->getCodeVerifier();
+            unset($token_params['client_secret']);
         }
 
         // Convert token params to string format
