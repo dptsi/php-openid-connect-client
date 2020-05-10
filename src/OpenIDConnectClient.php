@@ -223,6 +223,11 @@ class OpenIDConnectClient
     private $extraQueryParams = array();
 
     /**
+     * @var string codeVerifier in PKCE
+     */
+    protected $codeVerifier;
+
+    /**
      * @param $provider_url string optional
      *
      * @param $client_id string optional
@@ -331,7 +336,14 @@ class OpenIDConnectClient
         if (isset($_REQUEST["code"])) {
 
             $code = $_REQUEST["code"];
-            $token_json = $this->requestTokens($code);
+            $code_challenge = "";
+
+            // Check if token request with PKCE 
+            if (isset($_REQUEST["code_challenge"])) {
+                $code_challenge = $_REQUEST["code_challenge"];
+            }
+
+            $token_json = $this->requestTokens($code, $code_challenge);
 
             // Throw an error if the server returns one
             if (isset($token_json->error)) {
@@ -631,6 +643,37 @@ class OpenIDConnectClient
         return md5(uniqid(rand(), TRUE));
     }
 
+    private function base64url_encode($text){
+        $base64 = base64_encode($text);
+        $base64 = trim($base64, "=");
+        $base64url = strtr($base64, '+/', '-_');
+        return ($base64url);
+    }
+
+    /**
+     * Used for generate code verifier
+     *
+     * @return string
+     */
+    protected function generateCodeVerifier() {
+        $verifier = $this->base64url_encode(pack('H*', bin2hex(random_bytes(rand(43, 100)))));
+        return substr($verifier, 0, rand(43,100));
+    }
+
+    /**
+     * Used for generate code challenge for PKCE from code_verifier
+     *
+     * @return string
+     */
+    protected function generateCodeChallenge($code_verifier, $code_challenge_method = 'S256') {
+        if ($code_challenge_method == 'S256') {
+            return $this->base64url_encode(pack('H*', hash('sha256', $code_verifier)));
+        }
+
+        // plain 
+        return $code_verifier;
+    }
+
     /**
      * Start Here
      * @return void
@@ -668,6 +711,19 @@ class OpenIDConnectClient
 
         if (sizeof($this->extraQueryParams) > 0) {
             $auth_params = array_merge($auth_params, $this->extraQueryParams);
+        }
+
+        // read from config, or state
+        $slientSecret = $this->getClientSecret();
+        if (empty($slientSecret)) {
+            $code_challenge_method = 'S256';
+            $code_verifier = $this->setCodeVerifier($this->generateCodeVerifier());
+            $code_challenge = $this->generateCodeChallenge($code_verifier, $code_challenge_method);
+
+            $auth_params = array_merge($auth_params, array(
+                'code_challenge' => $code_challenge,
+                'code_challenge_method' => $code_challenge_method,
+            ));
         }
 
         $auth_endpoint .= (strpos($auth_endpoint, '?') === false ? '?' : '&') . http_build_query($auth_params, null, '&');
@@ -742,7 +798,7 @@ class OpenIDConnectClient
      * @param $code
      * @return mixed
      */
-    private function requestTokens($code) {
+    private function requestTokens($code, $code_challenge = "") {
         $token_endpoint = $this->getProviderConfigValue("token_endpoint");
         $token_endpoint_auth_methods_supported = $this->getProviderConfigValue("token_endpoint_auth_methods_supported", ['client_secret_basic']);
 
@@ -764,9 +820,15 @@ class OpenIDConnectClient
             unset($token_params['client_secret']);
         }
 
+        // Include code verifier on token request if code challenge exist
+        if (!empty($code_challenge)) {
+            $headers = [];
+            $token_params['code_verifier'] = $this->getCodeVerifier();
+            unset($token_params['client_secret']);
+        }
+
         // Convert token params to string format
         $token_params = http_build_query($token_params, null, '&');
-
         return json_decode($this->fetchURL($token_endpoint, $token_params, $headers));
 
     }
@@ -1569,6 +1631,36 @@ class OpenIDConnectClient
     public function getTimeout()
     {
         return $this->timeOut;
+    }
+
+    /**
+     * Set code verifier
+     *
+     * @param string $code_verifier
+     */
+    public function setCodeVerifier($code_verifier)
+    {
+        $this->setSessionKey('openid_connect_code_verifier', $code_verifier);
+        return $code_verifier;
+    }
+
+    /**
+     * Get code verifier
+     *
+     * @return string
+     */
+    public function getCodeVerifier()
+    {
+        return $this->getSessionKey('openid_connect_code_verifier');;
+    }
+
+    /**
+     * Cleanup code verifier
+     *
+     * @return void
+     */
+    protected function unsetCodeVerifier() {
+        $this->unsetSessionKey('openid_connect_code_verifier');
     }
 
     /**
