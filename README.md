@@ -93,7 +93,9 @@ try {
 }
 ```
 
-## Client Initiated Backchannel Authentication (CIBA) equest ##
+## Client Initiated Backchannel Authentication (CIBA) request ##
+This is used in Institut Teknologi Sepuluh Nopember's (ITS) authorization server which supports CIBA.
+
 a. Non signed request
 ```php
     $oidc = new OpenIDConnectClient(
