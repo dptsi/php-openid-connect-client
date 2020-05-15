@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## [1.4.0]
+
+### Added
+* Add (Client Initiated Backchannel Authentication) CIBA support: non signed request + signed request, token request
+* documentation for ciba coming soon
+
 ## [1.3.0]
 
 ### Added

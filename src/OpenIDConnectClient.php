@@ -23,8 +23,6 @@
 
 namespace Its\Sso;
 
-use GuzzleHttp\Exception\InvalidArgumentException;
-
 /**
  *
  * This package is base on jumbojett/OpenID-Connect-PHP by Michael Jett <mjett@mitre.org>
@@ -226,6 +224,26 @@ class OpenIDConnectClient
      * @var string codeVerifier in PKCE
      */
     protected $codeVerifier;
+
+    /**
+     * @var mixed clientNotificationToken, use to do ciba request
+     */
+    protected $clientNotificationToken;
+
+    /**
+     * @var string code to bind AD and CD
+     */
+    protected $bindingMessage;
+
+    /**
+     * @var string ciba session request identifier
+     */
+    protected $authReqId;
+
+    /**
+     * @var string ciba mode token
+     */
+    protected $backchannelTokenDeliveryMode;
 
     /**
      * @param $provider_url string optional
@@ -495,6 +513,146 @@ class OpenIDConnectClient
 
         $signout_endpoint  .= (strpos($signout_endpoint, '?') === false ? '?' : '&') . http_build_query( $signout_params, null, '&');
         $this->redirect($signout_endpoint);
+    }
+
+    /**
+     * @param $clientNotificationToken
+     * @return mixed
+     */
+    public function setClientNotificationToken($clientNotificationToken) {
+        $this->setSessionKey('client_notification_token', $clientNotificationToken);
+        $this->clientNotificationToken = $clientNotificationToken;
+
+        return $clientNotificationToken;
+    }
+
+    /**
+     * @param $bindingMessage
+     * @return mixed
+     */
+    public function setBindingMessage($bindingMessage) {
+        $this->setSessionKey('binding_message_ciba', $bindingMessage);
+        $this->bindingMessage = $bindingMessage;
+
+        return $bindingMessage;
+    }
+
+    /**
+     * @param string $backchannelTokenDeliveryMode
+     */
+    public function setBackchannelTokenDeliveryMode($backchannelTokenDeliveryMode) {
+        $this->backchannelTokenDeliveryMode = $backchannelTokenDeliveryMode;
+    }
+
+    /**
+     * @return mixed|null
+     */
+    public function getBindingMessage()
+    {
+        return $this->getSessionKey('binding_message_ciba');
+    }
+
+    /**
+     * @param $auth_req_id
+     * @return object
+     * @throws OpenIDConnectClientException
+     */
+    public function cibaTokenRequest($auth_req_id) {
+        $token_endpoint = $this->getProviderConfigValue("token_endpoint");
+        $token_endpoint_auth_methods_supported = $this->getProviderConfigValue("token_endpoint_auth_methods_supported", ['client_secret_basic']);
+
+        $headers = [];
+
+        $grant_type = "urn:openid:params:grant-type:ciba";
+
+        $token_params = array(
+            'grant_type' => $grant_type,
+            'auth_req_id' => $auth_req_id,
+            'client_id' => $this->clientID,
+            'client_secret' => $this->clientSecret,
+        );
+
+        # Consider Basic authentication if provider config is set this way
+        if (in_array('client_secret_basic', $token_endpoint_auth_methods_supported)) {
+            $headers = ['Authorization: Basic ' . base64_encode($this->clientID . ':' . $this->clientSecret)];
+            unset($token_params['client_secret']);
+        }
+
+        // Convert token params to string format
+        $token_params = http_build_query($token_params, null, '&');
+
+        return json_decode($this->fetchURL($token_endpoint, $token_params, $headers));
+    }
+
+    private function generateBindingMessage()
+    {
+        return strtoupper(substr(md5(mt_rand()), 0, 5));
+    }
+
+    /**
+     * @return string
+     */
+    public function getBackchannelTokenDeliveryMode()
+    {
+        return $this->backchannelTokenDeliveryMode;
+    }
+
+    public function setAllowedToPoll($allow) {
+        $this->setSessionKey('allowPolling', $allow);
+    }
+
+    /**
+     * Ciba Request
+     * @param $client_notification_token
+     * @param $user_id
+     * @param int $requested_expiry
+     * @return array
+     * @throws OpenIDConnectClientException
+     */
+    public function authenticationRequestCiba($client_notification_token, $user_id, $requested_expiry = 5) {
+
+        $ciba_auth_endpoint = $this->getProviderConfigValue("backchannel_authentication_endpoint");
+
+        $client_notification_token = $this->setClientNotificationToken($client_notification_token);
+        $binding_message = $this->setBindingMessage($this->generateBindingMessage());
+
+        $headers = [];
+        $token_endpoint_auth_methods_supported = $this->getProviderConfigValue("token_endpoint_auth_methods_supported", ['client_secret_basic']);
+
+        $auth_params = array(
+            'scope' => 'openid',
+            'client_notification_token' => $client_notification_token,
+            'login_hint' => $user_id,
+            'binding_message' => $binding_message,
+            'requested_expiry' => $requested_expiry,
+        );
+
+        // If the client has been registered with additional scopes
+        if (sizeof($this->scopes) > 0) {
+            $auth_params = array_merge($auth_params, array('scope' => implode(' ', $this->scopes)));
+        }
+
+        # Consider Basic authentication if provider config is set this way
+        if (in_array('client_secret_basic', $token_endpoint_auth_methods_supported)) {
+            $headers = ['Authorization: Basic ' . base64_encode($this->clientID . ':' . $this->clientSecret)];
+        }
+
+        $auth_params = http_build_query($auth_params, null, '&');
+
+        $response = $this->fetchURL($ciba_auth_endpoint, $auth_params, $headers);
+        $this->setAuthReqId($response);
+        if ($this->getBackchannelTokenDeliveryMode() === 'poll') {
+            $this->setAllowedToPoll(true);
+        }
+
+        $this->commitSession();
+
+        return json_decode($response);
+    }
+
+    public function setAuthReqId($authReqId) {
+        $this->setSessionKey('auth_req_id', $authReqId);
+        $this->authReqId = $authReqId;
     }
 
     /**
@@ -1801,5 +1959,229 @@ class OpenIDConnectClient
 
         return ($claims->iss == $this->getIssuer() || $claims->iss == $this->getWellKnownIssuer() || $claims->iss == $this->getWellKnownIssuer(true))
             && (($claims->aud == $this->clientID) || (in_array($this->clientID, $claims->aud)));
+    }
+
+    /**
+     * @param $payload
+     * @param $key
+     * @param $kid
+     * @param string $algo
+     * @return string
+     * @throws Exception
+     */
+    public function encode($payload, $key, $kid, $algo = 'HS256')
+    {
+        $header = $this->generateJwtHeader($payload, $algo, $kid);
+
+        $segments = array(
+            $this->urlSafeB64Encode(json_encode($header)),
+            $this->urlSafeB64Encode(json_encode($payload))
+        );
+
+        $signing_input = implode('.', $segments);
+
+        $signature = $this->sign($signing_input, $key, $algo);
+        $segments[] = $this->urlsafeB64Encode($signature);
+
+        return implode('.', $segments);
+    }
+
+    /**
+     * @param string      $jwt
+     * @param null        $key
+     * @param array|bool  $allowedAlgorithms
+     * @return bool|mixed
+     */
+    public function decode($jwt, $key = null, $allowedAlgorithms = true)
+    {
+        if (!strpos($jwt, '.')) {
+            return false;
+        }
+
+        $tks = explode('.', $jwt);
+
+        if (count($tks) != 3) {
+            return false;
+        }
+
+        list($headb64, $payloadb64, $cryptob64) = $tks;
+
+        if (null === ($header = json_decode($this->urlSafeB64Decode($headb64), true))) {
+            return false;
+        }
+
+        if (null === $payload = json_decode($this->urlSafeB64Decode($payloadb64), true)) {
+            return false;
+        }
+
+        $sig = $this->urlSafeB64Decode($cryptob64);
+
+        if ((bool) $allowedAlgorithms) {
+            if (!isset($header['alg'])) {
+                return false;
+            }
+
+            // check if bool arg supplied here to maintain BC
+            if (is_array($allowedAlgorithms) && !in_array($header['alg'], $allowedAlgorithms)) {
+                return false;
+            }
+
+            if (!$this->verifySignature($sig, "$headb64.$payloadb64", $key, $header['alg'])) {
+                return false;
+            }
+        }
+
+        return $payload;
+    }
+
+    /**
+     * @param $signature
+     * @param $input
+     * @param $key
+     * @param string $algo
+     * @return bool
+     * @throws InvalidArgumentException
+     * @throws Exception
+     */
+    private function verifySignature($signature, $input, $key, $algo = 'HS256')
+    {
+        // use constants when possible, for HipHop support
+        switch ($algo) {
+            case'HS256':
+            case'HS384':
+            case'HS512':
+                return $this->hash_equals(
+                    $this->sign($input, $key, $algo),
+                    $signature
+                );
+
+            case 'RS256':
+                return openssl_verify($input, $signature, $key, defined('OPENSSL_ALGO_SHA256') ? OPENSSL_ALGO_SHA256 : 'sha256')  === 1;
+
+            case 'RS384':
+                return @openssl_verify($input, $signature, $key, defined('OPENSSL_ALGO_SHA384') ? OPENSSL_ALGO_SHA384 : 'sha384') === 1;
+
+            case 'RS512':
+                return @openssl_verify($input, $signature, $key, defined('OPENSSL_ALGO_SHA512') ? OPENSSL_ALGO_SHA512 : 'sha512') === 1;
+
+            default:
+                throw new InvalidArgumentException("Unsupported or invalid signing algorithm.");
+        }
+    }
+
+    /**
+     * @param $input
+     * @param $key
+     * @param string $algo
+     * @return string
+     * @throws Exception
+     */
+    private function sign($input, $key, $algo = 'HS256')
+    {
+        switch ($algo) {
+            case 'HS256':
+                return hash_hmac('sha256', $input, $key, true);
+
+            case 'HS384':
+                return hash_hmac('sha384', $input, $key, true);
+
+            case 'HS512':
+                return hash_hmac('sha512', $input, $key, true);
+
+            case 'RS256':
+                return $this->generateRSASignature($input, $key, defined('OPENSSL_ALGO_SHA256') ? OPENSSL_ALGO_SHA256 : 'sha256');
+
+            case 'RS384':
+                return $this->generateRSASignature($input, $key, defined('OPENSSL_ALGO_SHA384') ? OPENSSL_ALGO_SHA384 : 'sha384');
+
+            case 'RS512':
+                return $this->generateRSASignature($input, $key, defined('OPENSSL_ALGO_SHA512') ? OPENSSL_ALGO_SHA512 : 'sha512');
+
+            default:
+                throw new Exception("Unsupported or invalid signing algorithm.");
+        }
+    }
+
+    /**
+     * @param $input
+     * @param $key
+     * @param string $algo
+     * @return mixed
+     * @throws Exception
+     */
+    private function generateRSASignature($input, $key, $algo)
+    {
+        if (!openssl_sign($input, $signature, $key, $algo)) {
+            throw new Exception("Unable to sign data.");
+        }
+
+        return $signature;
+    }
+
+    /**
+     * @param string $data
+     * @return string
+     */
+    public function urlSafeB64Encode($data)
+    {
+        $b64 = base64_encode($data);
+        $b64 = str_replace(array('+', '/', "\r", "\n", '='),
+            array('-', '_'),
+            $b64);
+
+        return $b64;
+    }
+
+    /**
+     * @param string $b64
+     * @return mixed|string
+     */
+    public function urlSafeB64Decode($b64)
+    {
+        $b64 = str_replace(array('-', '_'),
+            array('+', '/'),
+            $b64);
+
+        return base64_decode($b64);
+    }
+
+    /**
+     * Override to create a custom header
+     */
+    protected function generateJwtHeader($payload, $algorithm, $kid)
+    {
+        return array(
+            'typ' => 'JWT',
+            'alg' => $algorithm,
+            'kid' => $kid
+        );
+    }
+
+    /**
+     * @param string $a
+     * @param string $b
+     * @return bool
+     */
+    protected function hash_equals($a, $b)
+    {
+        if (function_exists('hash_equals')) {
+            return hash_equals($a, $b);
+        }
+        $diff = strlen($a) ^ strlen($b);
+        for ($i = 0; $i < strlen($a) && $i < strlen($b); $i++) {
+            $diff |= ord($a[$i]) ^ ord($b[$i]);
+        }
+
+        return $diff === 0;
+    }
+
+    /**
+     * @param string $token
+     * @param string $section = 0
+     * @return array
+     */
+    public function getJwtHeader($jwt, $section = 0) {
+        $parts = explode(".", $jwt);
+        return json_decode($this->urlSafeB64Decode($parts[$section]));
     }
 }
