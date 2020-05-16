@@ -93,5 +93,85 @@ try {
 }
 ```
 
+## Client Initiated Backchannel Authentication (CIBA) request ##
+This is used in Institut Teknologi Sepuluh Nopember's (ITS) authorization server which supports CIBA.
+
+a. Non signed request
+```php
+    $oidc = new OpenIDConnectClient(
+                'https://dev-my.its.ac.id', // authorization_endpoint
+        'XXXXXXX-XXXXXXX-XXXXXXX-XXXXXXX', // Client ID
+        '***********************' // Client Secret
+    );
+    // Note that only ping and push modes require this token
+    // but please for the sake of the library's function, pass this value even if you're not using ping or push.
+    $clientNotificationToken = 'some random unguessable token used by the OP to as Authorization Bearer';
+    
+    // Hint currently supports only login_hint, which is the user's identifier
+    $userId = 'user identifier as login hint';
+    
+    // how long should the authentication request id be valid for in seconds
+    $requestedExpiry = '60';
+
+       try {
+            $response = (array)$this->oidcClient->authenticationRequestCiba($clientNotificationToken, $userId, $requestedExpiry);
+                
+        } catch (OpenIDConnectClientException $e) {
+            echo $e->getMessage();
+                
+            return false;
+        }
+
+        // authentication request id is in here
+        var_dump($response);
+
+```
+
+b. Signed request
+```php
+    $oidc = new OpenIDConnectClient(
+                'https://dev-my.its.ac.id', // authorization_endpoint
+        'XXXXXXX-XXXXXXX-XXXXXXX-XXXXXXX', // Client ID
+        '***********************' // Client Secret
+    );
+    // Note that only ping and push modes require this token
+    // but please for the sake of the library's function, pass this value even if you're not using ping or push.
+    $clientNotificationToken = 'some random unguessable token used by the OP to as Authorization Bearer';
+    
+    // Hint currently supports only login_hint, which is the user's identifier
+    $userId = 'user identifier as login hint';
+    
+    // how long should the authentication request id be valid for in seconds
+    $requestedExpiry = '60';
+    
+    // this is used to sign the parameters
+    $privateKey = 'private key for your client app.';
+    $kid = 'key id for the private key';
+    $alg = 'RS256'; // the default for function signedAuthenticationRequestCiba is RS256. Please look at CIBA specs for the supported alg.
+       try {
+            $response = (array)$this->oidcClient->signedAuthenticationRequestCiba($clientNotificationToken, $userId, $privateKey, $kid, $alg, $requestedExpiry);
+                
+        } catch (OpenIDConnectClientException $e) {
+            echo $e->getMessage();
+                
+            return false;
+        }
+
+        // authentication request id is in here
+        var_dump($response);
+
+```
+
+d. Token request
+
+This is only for poll and ping mode.
+```php
+    $authReqId = 'authentication request id from ciba request.';
+    $response = (array)$this->oidcClient->cibaTokenRequest($authReqId);
+    
+    // token is in here
+    var_dump($response);
+```
+
 ## More information ##
 More information and sample of this package you can see at [our wiki](https://github.com/dptsi/php-openid-connect-client/wiki)
