@@ -650,6 +650,83 @@ class OpenIDConnectClient
         return json_decode($response);
     }
 
+    /**
+     * Signed authentication request ciba
+     *
+     * @param $client_notification_token
+     * @param $user_id
+     * @param $private_key
+     * @param $kid
+     * @param string $alg
+     * @param int $requested_expiry
+     * @return mixed
+     * @throws OpenIDConnectClientException
+     */
+    public function signedAuthenticationRequestCiba($client_notification_token, $user_id, $private_key, $kid, $alg = 'RS256', $requested_expiry = 5)
+    {
+        $this->timeOut = 500;
+
+        $now = time();
+
+        $ciba_auth_endpoint = $this->getProviderConfigValue("backchannel_authentication_endpoint");
+
+        $client_notification_token = $this->setClientNotificationToken($client_notification_token);
+        $binding_message = $this->setBindingMessage($this->generateBindingMessage());
+
+        $headers = [];
+        $token_endpoint_auth_methods_supported = $this->getProviderConfigValue("token_endpoint_auth_methods_supported", ['client_secret_basic']);
+
+        $requiredClaims = [
+            'aud' => $this->getProviderURL(),
+            'iss' => $this->getClientID(),
+            'exp' => $now + $requested_expiry,
+            'iat' => $now ,
+            'nbf' => $now,
+            'jti' => $this->generateRandString()
+        ];
+
+        $auth_request_parameters = [
+            'scope' => 'openid',
+            'client_notification_token' => $client_notification_token,
+            'login_hint' => $user_id,
+            'binding_message' => $binding_message,
+            'requested_expiry' => $requested_expiry,
+        ];
+
+        // If the client has been registered with additional scopes
+        if (sizeof($this->scopes) > 0) {
+            $auth_request_parameters = array_merge($auth_request_parameters, array('scope' => implode(' ', $this->scopes)));
+        }
+
+        $jwtClaims = array_merge($auth_request_parameters, $requiredClaims);
+
+        // The JWT MUST be secured with
+        // an asymmetric signature and follow the guidance from Section 10.1 of [OpenID.Core] regarding
+        // asymmetric signatures
+        $jwt = $this->encode($jwtClaims, $private_key, $kid, $alg);
+
+        // The signed authentication request JWT is passed as an application/x-www-form-urlencoded HTTP
+        // request parameter with the name request
+        $auth_params = [ 'request' => $jwt ];
+
+        $auth_params = http_build_query($auth_params, null, '&');
+
+        # Consider Basic authentication if provider config is set this way
+        if (in_array('client_secret_basic', $token_endpoint_auth_methods_supported)) {
+            $headers = ['Authorization: Basic ' . base64_encode($this->clientID . ':' . $this->clientSecret)];
+        }
+
+        $response = $this->fetchURL($ciba_auth_endpoint, $auth_params, $headers);
+        $this->setAuthReqId($response);
+        if ($this->getBackchannelTokenDeliveryMode() === 'poll') {
+            $this->setAllowedToPoll(true);
+        }
+
+        $this->commitSession();
+
+        return json_decode($response);
+    }
+
     public function setAuthReqId($authReqId) {
         $this->setSessionKey('auth_req_id', $authReqId);
         $this->authReqId = $authReqId;
@@ -1114,6 +1191,16 @@ class OpenIDConnectClient
         	$rsa->signatureMode = \phpseclib\Crypt\RSA::SIGNATURE_PKCS1;
 	}
         return $rsa->verify($payload, $signature);
+    }
+
+    public function verifyCibaToken($id_token, $access_token, $refresh_token = null)
+    {
+        $claims = $this->decodeJWT($id_token, 1);
+        if ($this->verifyJWTclaims($claims, $access_token)) {
+            return true;
+        } else {
+            throw new OpenIDConnectClientException ("Unable to verify JWT claims");
+        }
     }
 
     /**
