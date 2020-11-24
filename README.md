@@ -52,6 +52,7 @@ try {
     $oidc->authenticate(); //call the main function of myITS SSO login
 
     $_SESSION['id_token'] = $oidc->getIdToken(); // must be save for check session dan logout proccess
+    $user = $oidc->requestUserInfo(); // this will return user information from myITS SSO database
 } catch (OpenIDConnectClientException $e) {
     echo $e->getMessage();
 }
@@ -67,7 +68,7 @@ use Its\OpenIDConnectClientException;
 
 try {
     session_start();
-    $redirect = 'https://myweb.site/index.php';
+    $redirect = 'https://myweb.site/index.php'; // set https://dev-my.its.ac.id or https://my.its.ac.id if you don't register post-logout URI
 
     if (isset($_SESSION['id_token'])) {
         $accessToken = $_SESSION['id_token'];
