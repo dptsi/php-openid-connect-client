@@ -18,5 +18,8 @@
             "name": "DPTSI ITS",
             "email": "mobile@its.ac.id"
         }
-    ]
+    ],
+    "require-dev": {
+        "phpstan/phpstan": "^2.1"
+    }
 }
