@@ -2054,7 +2054,7 @@ class OpenIDConnectClient
      * @param $kid
      * @param string $algo
      * @return string
-     * @throws Exception
+     * @throws \Exception
      */
     public function encode($payload, $key, $kid, $algo = 'HS256')
     {
@@ -2127,8 +2127,8 @@ class OpenIDConnectClient
      * @param $key
      * @param string $algo
      * @return bool
-     * @throws InvalidArgumentException
-     * @throws Exception
+     * @throws \InvalidArgumentException
+     * @throws \Exception
      */
     private function verifySignature($signature, $input, $key, $algo = 'HS256')
     {
@@ -2152,7 +2152,7 @@ class OpenIDConnectClient
                 return @openssl_verify($input, $signature, $key, defined('OPENSSL_ALGO_SHA512') ? OPENSSL_ALGO_SHA512 : 'sha512') === 1;
 
             default:
-                throw new InvalidArgumentException("Unsupported or invalid signing algorithm.");
+                throw new \InvalidArgumentException("Unsupported or invalid signing algorithm.");
         }
     }
 
@@ -2161,7 +2161,7 @@ class OpenIDConnectClient
      * @param $key
      * @param string $algo
      * @return string
-     * @throws Exception
+     * @throws \Exception
      */
     private function sign($input, $key, $algo = 'HS256')
     {
@@ -2185,7 +2185,7 @@ class OpenIDConnectClient
                 return $this->generateRSASignature($input, $key, defined('OPENSSL_ALGO_SHA512') ? OPENSSL_ALGO_SHA512 : 'sha512');
 
             default:
-                throw new Exception("Unsupported or invalid signing algorithm.");
+                throw new \Exception("Unsupported or invalid signing algorithm.");
         }
     }
 
@@ -2194,12 +2194,12 @@ class OpenIDConnectClient
      * @param $key
      * @param string $algo
      * @return mixed
-     * @throws Exception
+     * @throws \Exception
      */
     private function generateRSASignature($input, $key, $algo)
     {
         if (!openssl_sign($input, $signature, $key, $algo)) {
-            throw new Exception("Unable to sign data.");
+            throw new \Exception("Unable to sign data.");
         }
 
         return $signature;
