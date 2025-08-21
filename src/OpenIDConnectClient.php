@@ -245,6 +245,8 @@ class OpenIDConnectClient
      */
     protected $backchannelTokenDeliveryMode;
 
+    private $jwks = false;
+
     /**
      * @param $provider_url string optional
      *
@@ -1246,10 +1248,7 @@ class OpenIDConnectClient
             throw new OpenIDConnectClientException('Error decoding JSON from token header');
         }
         $payload = implode(".", $parts);
-        $jwks = json_decode($this->fetchURL($this->getProviderConfigValue('jwks_uri')));
-        if ($jwks === NULL) {
-            throw new OpenIDConnectClientException('Error decoding JSON from jwks_uri');
-        }
+        $jwks = $this->getJwks();
         $verified = false;
         if (!isset($header->alg)) {
             throw new OpenIDConnectClientException('Error missing signature type in token header');
@@ -1274,6 +1273,25 @@ class OpenIDConnectClient
             throw new OpenIDConnectClientException('No support for signature type: ' . $header->alg);
         }
         return $verified;
+    }
+
+    /**
+     * @return object
+     */
+    private function getJwks() {
+        if ($this->jwks === false) {
+            $this->jwks = json_decode($this->fetchURL($this->getProviderConfigValue('jwks_uri')));
+        }
+        
+        return $this->jwks;
+    }
+
+    /**
+     * @param array $jwks
+     * @return void
+     */
+    public function setJwks($jwks) {
+        $this->jwks = json_decode(json_encode($jwks));
     }
 
     /**
