@@ -3,8 +3,8 @@
     "description": "Package for connect to myITS SSO",
     "type": "library",
     "require": {
-        "php": ">=5.4",
-        "phpseclib/phpseclib": "~2.0",
+        "php": ">=5.6.1",
+        "phpseclib/phpseclib": "~3.0",
         "ext-json": "*",
         "ext-curl": "*"
     },
