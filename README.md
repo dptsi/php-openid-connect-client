@@ -10,8 +10,8 @@ developed specifically to connect applications that want to connect with myITS S
 Your application must be registered to the system, you can register your app by visit DPTSI-ITS and ask for registrating your app
 
 # Requirements #
- 1. PHP 5.4 or greater
- 2. phpseclib/phpseclib 2.0 or greater
+ 1. PHP 5.6.1 or greater
+ 2. phpseclib/phpseclib 3.0 or greater
  3. CURL extension
  4. JSON extension
 
